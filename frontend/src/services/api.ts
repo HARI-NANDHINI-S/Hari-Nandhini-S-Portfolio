@@ -66,28 +66,80 @@ export async function fetchExperience(): Promise<Experience[]> {
 }
 
 export async function submitContact(form: ContactSubmission): Promise<{ success: boolean; message: string }> {
-  try {
-    const res = await fetch(`${API_BASE}/contact`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.detail || 'Failed to submit contact message');
-    }
-    return {
-      success: data.success ?? true,
-      message: data.message || `Thank you ${form.name}! Your message has been received.`
-    };
-  } catch (err: any) {
-    // If backend is unreachable, we provide clear honest communication
+  const name = form.name?.trim() || '';
+  const email = form.email?.trim() || '';
+  const subject = form.subject?.trim() || '';
+  const message = form.message?.trim() || '';
+
+  if (!name || !email || !subject || !message) {
     return {
       success: false,
-      message: err.message || 'Unable to connect to backend service. Please reach out via direct email at harinandhini030506@gmail.com!'
+      message: 'Please fill in all contact fields (name, email, subject, and message).'
     };
   }
+
+  // Endpoints to attempt: First relative proxy /api/contact, then direct backend port fallbacks
+  const endpointsToTry = [
+    `${API_BASE}/contact`,
+    'http://127.0.0.1:8000/api/contact',
+    'http://localhost:8000/api/contact'
+  ];
+
+  let lastDetailedError = '';
+
+  for (const endpoint of endpointsToTry) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+
+      // Safely read response text first to guard against HTML error pages (e.g. 404, 502, proxy timeout)
+      const rawText = await res.text();
+      let data: any = null;
+
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        // If server returns non-JSON (HTML 404/502/504 page from proxy or static host)
+        lastDetailedError = `Endpoint ${endpoint} returned non-JSON response (HTTP ${res.status}).`;
+        continue; // Try direct fallback endpoint
+      }
+
+      if (data && typeof data.success === 'boolean') {
+        return {
+          success: data.success,
+          message: data.message || (data.success ? `Thank you, ${name}! Your message has been sent.` : 'Email delivery could not be completed.')
+        };
+      }
+
+      if (res.ok) {
+        return {
+          success: true,
+          message: data?.message || `Thank you, ${name}! Your message has been received.`
+        };
+      } else {
+        return {
+          success: false,
+          message: data?.detail || data?.message || `HTTP ${res.status}: Failed to submit message.`
+        };
+      }
+    } catch (err: any) {
+      lastDetailedError = err?.message || 'Connection failed';
+      // Continue to next endpoint fallback
+    }
+  }
+
+  // If all endpoints failed or returned non-JSON
+  return {
+    success: false,
+    message: lastDetailedError && !lastDetailedError.includes('non-JSON')
+      ? lastDetailedError
+      : 'Unable to reach the contact backend service. Please ensure the backend server is running on http://127.0.0.1:8000, or email Hari directly at harinandhini030506@gmail.com.'
+  };
 }
 

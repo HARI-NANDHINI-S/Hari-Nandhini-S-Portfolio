@@ -1,3 +1,10 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"))
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -5,7 +12,6 @@ from backend.app.database import engine, Base, SessionLocal
 from backend.app.models.models import Project
 from backend.app.routes import contact, projects, certifications, achievements, experience
 from backend.app.seed import seed_database
-import os
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -31,22 +37,27 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
     "https://hari-nandhini-s.github.io",
-    "*"
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routes
-app.include_router(contact.router)
+app.include_router(contact.router, prefix="/api/contact")
+app.include_router(contact.router, prefix="/contact")
 app.include_router(projects.router)
 app.include_router(certifications.router)
 app.include_router(achievements.router)

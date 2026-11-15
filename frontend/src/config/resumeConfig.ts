@@ -27,7 +27,7 @@ export const resumeFiles: Record<'softwareDevelopment' | 'dataAI', ResumeOption>
       "CIT M.Sc. Software Systems (CGPA: 8.85 / 10)",
       "Python, C++, Java proficiency",
       "React & FastAPI REST architectures",
-      "VoxNira / Granus & Land-IQ full-stack systems projects",
+      "VoxNira & Land-IQ full-stack systems projects",
       "Part-time Web Developer @ Studio 3 Interactive"
     ]
   },

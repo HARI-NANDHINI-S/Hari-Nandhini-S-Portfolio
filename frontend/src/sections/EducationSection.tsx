@@ -39,9 +39,9 @@ const MARKSHEETS_CONFIG: Record<'college' | 'hsc' | 'sslc', { isAvailable: boole
     label: 'View HSC Marksheet'
   },
   sslc: {
-    isAvailable: false,
-    path: '',
-    label: 'Marksheet not uploaded'
+    isAvailable: true,
+    path: '/assets/documents/marksheets/10th-marksheet.pdf',
+    label: 'View 10th Marksheet'
   }
 };
 

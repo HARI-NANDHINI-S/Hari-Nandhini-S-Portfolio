@@ -38,28 +38,33 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent duplicate submissions
     if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
       onShowToast('error', 'Please fill in all contact fields.');
       return;
     }
 
     setIsSubmitting(true);
-    const res = await submitContact(formData);
-    setIsSubmitting(false);
-
-    if (res.success) {
-      onShowToast('success', res.message);
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ['#168BFF', '#38D9FF', '#FF852E']
-        });
-      } catch (err) {}
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    } else {
-      onShowToast('error', res.message);
+    try {
+      const res = await submitContact(formData);
+      if (res.success) {
+        onShowToast('success', res.message);
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#168BFF', '#38D9FF', '#FF852E']
+          });
+        } catch (err) {}
+        setFormData({ name: '', email: '', subject: '', message: '' });
+      } else {
+        onShowToast('error', res.message);
+      }
+    } catch (err: any) {
+      onShowToast('error', err?.message || 'An unexpected error occurred while sending.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -253,7 +258,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-cyan to-cyber-orange hover:opacity-95 text-white text-xs sm:text-sm font-semibold shadow-glow-cyan hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-cyan to-cyber-orange hover:opacity-95 text-white text-xs sm:text-sm font-semibold shadow-glow-cyan hover:scale-[1.01] active:scale-[0.99] disabled:hover:scale-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
                     <span>{isSubmitting ? 'Dispatching Message...' : 'Send Message'}</span>

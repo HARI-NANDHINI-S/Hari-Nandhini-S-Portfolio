@@ -190,7 +190,7 @@ export const INITIAL_PROJECTS: Project[] = [
   },
   {
     id: 8,
-    title: "VoxNira / Granus — Multilingual Medical Speech AI Triage Assistant",
+    title: "VoxNira – Human Triage Multilingual Medical Assistant",
     slug: "voxnira",
     category: "Artificial Intelligence",
     short_description: "A multilingual voice-based medical assistant converting regional-language patient speech into structured clinical information and triage routing.",
@@ -206,7 +206,7 @@ export const INITIAL_PROJECTS: Project[] = [
       "Synthetic benchmark: 85% triage accuracy & 100% emergency sensitivity evaluated on 360 synthetic scenarios"
     ],
     my_contribution: "Designed the speech-to-text pipeline, engineered clinical entity extraction, and implemented the confidence-scored triage classifier.",
-    github_url: "https://github.com/HARI-NANDHINI-S/Granus",
+    github_url: "https://github.com/lithishkanna/Grannus",
     image_url: "/assets/images/projects/vox-nira-cover.png",
     screenshots: ["/assets/images/projects/vox-nira-cover.png"],
     featured: false,

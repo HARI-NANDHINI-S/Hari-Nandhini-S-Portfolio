@@ -185,7 +185,7 @@ def seed_database():
             sort_order=7
         ),
         Project(
-            title="VoxNira / Granus — Multilingual Medical Speech AI Triage Assistant",
+            title="VoxNira – Human Triage Multilingual Medical Assistant",
             slug="voxnira",
             category="Artificial Intelligence",
             short_description="A multilingual voice-based medical assistant converting regional-language patient speech into structured clinical information and triage routing.",
@@ -201,7 +201,7 @@ def seed_database():
                 "Synthetic benchmark: 85% triage accuracy & 100% emergency sensitivity evaluated on 360 synthetic scenarios"
             ]),
             my_contribution="Designed the speech-to-text pipeline, engineered clinical entity extraction, and implemented the confidence-scored triage classifier.",
-            github_url="https://github.com/HARI-NANDHINI-S/Granus",
+            github_url="https://github.com/lithishkanna/Grannus",
             live_url=None,
             image_url="/assets/images/projects/vox-nira-cover.png",
             screenshots=json.dumps(["/assets/images/projects/vox-nira-cover.png"]),
