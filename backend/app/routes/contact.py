@@ -28,7 +28,8 @@ def attempt_smtp_email(name: str, sender_email: str, subject: str, message: str,
         smtp_port = 587
 
     smtp_user = os.getenv("SMTP_USERNAME", "").strip()
-    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+    # Strip spaces from password in case user copied a 16-character Google App Password with spaces
+    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
     target_email = os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com").strip()
 
     if not smtp_user or not smtp_pass:
@@ -137,6 +138,20 @@ Click Reply to respond directly to {sender_email}.
         err = f"Unexpected delivery failure: {str(e)}"
         print(f"[SMTP Error] {err}")
         return False, err
+
+@router.get("", response_model=dict, status_code=status.HTTP_200_OK)
+@router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
+def get_contact_status():
+    smtp_user = os.getenv("SMTP_USERNAME", "").strip()
+    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+    target_email = os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com").strip()
+    return {
+        "status": "online",
+        "service": "portfolio-contact-api",
+        "endpoint": "POST /api/contact",
+        "target_email": target_email,
+        "smtp_configured": bool(smtp_user and smtp_pass)
+    }
 
 @router.post("", response_model=dict, status_code=status.HTTP_200_OK)
 @router.post("/", response_model=dict, status_code=status.HTTP_200_OK)

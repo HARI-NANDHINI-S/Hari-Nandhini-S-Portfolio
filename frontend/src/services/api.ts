@@ -6,13 +6,33 @@ import {
   INITIAL_EXPERIENCE 
 } from '../data/portfolioData';
 
-const API_BASE = '/api';
+/**
+ * Resolves the backend API base URL.
+ * Priority:
+ * 1. import.meta.env.VITE_API_URL (explicit Vercel/production environment variable)
+ * 2. import.meta.env.VITE_BACKEND_URL (alternative standard name)
+ * 3. Relative '/api' (handled by Vercel rewrites or local Vite proxy)
+ */
+export function getApiBase(): string {
+  const envUrl = (
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_BACKEND_URL ||
+    ''
+  ).trim().replace(/\/+$/, '');
+
+  if (envUrl) {
+    return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
+  }
+
+  return '/api';
+}
 
 export async function fetchProjects(category?: string): Promise<Project[]> {
   try {
+    const apiBase = getApiBase();
     const url = category && category !== 'All' 
-      ? `${API_BASE}/projects?category=${encodeURIComponent(category)}`
-      : `${API_BASE}/projects`;
+      ? `${apiBase}/projects?category=${encodeURIComponent(category)}`
+      : `${apiBase}/projects`;
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -28,7 +48,8 @@ export async function fetchProjects(category?: string): Promise<Project[]> {
 
 export async function fetchCertifications(): Promise<Certification[]> {
   try {
-    const res = await fetch(`${API_BASE}/certifications`, { headers: { 'Accept': 'application/json' } });
+    const apiBase = getApiBase();
+    const res = await fetch(`${apiBase}/certifications`, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data && data.length > 0 ? data : INITIAL_CERTIFICATIONS;
@@ -39,9 +60,10 @@ export async function fetchCertifications(): Promise<Certification[]> {
 
 export async function fetchAchievements(category?: string): Promise<Achievement[]> {
   try {
+    const apiBase = getApiBase();
     const url = category && category !== 'All'
-      ? `${API_BASE}/achievements?category=${encodeURIComponent(category)}`
-      : `${API_BASE}/achievements`;
+      ? `${apiBase}/achievements?category=${encodeURIComponent(category)}`
+      : `${apiBase}/achievements`;
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -56,7 +78,8 @@ export async function fetchAchievements(category?: string): Promise<Achievement[
 
 export async function fetchExperience(): Promise<Experience[]> {
   try {
-    const res = await fetch(`${API_BASE}/experience`, { headers: { 'Accept': 'application/json' } });
+    const apiBase = getApiBase();
+    const res = await fetch(`${apiBase}/experience`, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     return data && data.length > 0 ? data : INITIAL_EXPERIENCE;
@@ -78,12 +101,22 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
     };
   }
 
-  // Endpoints to attempt: First relative proxy /api/contact, then direct backend port fallbacks
-  const endpointsToTry = [
-    `${API_BASE}/contact`,
-    'http://127.0.0.1:8000/api/contact',
-    'http://localhost:8000/api/contact'
-  ];
+  const apiBase = getApiBase();
+  const endpointsToTry: string[] = [];
+
+  // 1. Primary configured endpoint from environment or relative proxy
+  endpointsToTry.push(`${apiBase}/contact`);
+
+  // 2. If apiBase has '/api', also try root alias '/contact'
+  if (apiBase.endsWith('/api') && apiBase !== '/api') {
+    endpointsToTry.push(`${apiBase.replace(/\/api$/, '')}/contact`);
+  }
+
+  // 3. In development ONLY, allow local dev fallbacks (strictly avoided in production)
+  if (import.meta.env.DEV) {
+    endpointsToTry.push('http://127.0.0.1:8000/api/contact');
+    endpointsToTry.push('http://localhost:8000/api/contact');
+  }
 
   let lastDetailedError = '';
 
@@ -106,8 +139,14 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
         data = JSON.parse(rawText);
       } catch {
         // If server returns non-JSON (HTML 404/502/504 page from proxy or static host)
-        lastDetailedError = `Endpoint ${endpoint} returned non-JSON response (HTTP ${res.status}).`;
-        continue; // Try direct fallback endpoint
+        lastDetailedError = `Endpoint returned non-JSON response (HTTP ${res.status}).`;
+        continue; // Try next candidate endpoint
+      }
+
+      // If response is a 404 and there are more endpoints to try, continue
+      if (res.status === 404 && endpointsToTry.indexOf(endpoint) < endpointsToTry.length - 1) {
+        lastDetailedError = `Endpoint ${endpoint} returned 404 Not Found.`;
+        continue;
       }
 
       if (data && typeof data.success === 'boolean') {
@@ -129,17 +168,20 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
         };
       }
     } catch (err: any) {
-      lastDetailedError = err?.message || 'Connection failed';
+      lastDetailedError = err?.message || 'Network connection failed.';
       // Continue to next endpoint fallback
     }
   }
 
-  // If all endpoints failed or returned non-JSON
+  // If all candidate endpoints failed
+  const isVercelOrProd = !import.meta.env.DEV;
+  const configGuidance = isVercelOrProd && apiBase === '/api'
+    ? ' (Please configure the VITE_API_URL environment variable in your Vercel Project Settings pointing to your deployed Render FastAPI service).'
+    : '';
+
   return {
     success: false,
-    message: lastDetailedError && !lastDetailedError.includes('non-JSON')
-      ? lastDetailedError
-      : 'Unable to reach the contact backend service. Please ensure the backend server is running on http://127.0.0.1:8000, or email Hari directly at harinandhini030506@gmail.com.'
+    message: `Unable to connect to the portfolio contact service${configGuidance} Please reach out directly to Hari Nandhini at harinandhini030506@gmail.com.`
   };
 }
 

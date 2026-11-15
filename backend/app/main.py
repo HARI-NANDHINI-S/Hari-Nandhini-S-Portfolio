@@ -49,7 +49,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
+    allow_origin_regex=r"(http://(localhost|127\.0\.0\.1)(:\d+)?|https://.*\.vercel\.app|https://.*\.onrender\.com|https://.*\.github\.io)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,10 +75,19 @@ def root():
             "/api/certifications",
             "/api/achievements",
             "/api/experience",
-            "/api/contact"
+            "/api/contact",
+            "/health"
         ]
     }
 
+@app.get("/health")
 @app.get("/api/health")
 def health_check():
-    return {"status": "healthy", "service": "portfolio-backend"}
+    smtp_user = os.getenv("SMTP_USERNAME", "").strip()
+    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+    return {
+        "status": "healthy",
+        "service": "portfolio-backend",
+        "smtp_configured": bool(smtp_user and smtp_pass),
+        "target_email": os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com")
+    }
