@@ -88,7 +88,32 @@ export async function fetchExperience(): Promise<Experience[]> {
   }
 }
 
-export async function submitContact(form: ContactSubmission): Promise<{ success: boolean; message: string }> {
+/**
+ * Safely extracts a displayable string from arbitrary API response payloads.
+ * Protects React from invariant crashes if 'detail' or 'message' is an object or array.
+ */
+function extractMessage(data: any, fallback: string): string {
+  if (!data) return fallback;
+  if (typeof data === 'string' && data.trim()) return data.trim();
+  if (typeof data.message === 'string' && data.message.trim()) return data.message.trim();
+  if (typeof data.detail === 'string' && data.detail.trim()) return data.detail.trim();
+  if (Array.isArray(data.detail) && data.detail.length > 0) {
+    const first = data.detail[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+    if (first && typeof first.msg === 'string') {
+      const field = Array.isArray(first.loc) && first.loc.length > 0 ? first.loc[first.loc.length - 1] : '';
+      return field ? `${field}: ${first.msg}` : first.msg;
+    }
+    return JSON.stringify(data.detail);
+  }
+  if (data.error) {
+    if (typeof data.error === 'string') return data.error;
+    if (typeof data.error.message === 'string') return data.error.message;
+  }
+  return fallback;
+}
+
+export async function submitContact(form: ContactSubmission): Promise<{ success: boolean; message: string; status?: string }> {
   const name = form.name?.trim() || '';
   const email = form.email?.trim() || '';
   const subject = form.subject?.trim() || '';
@@ -155,25 +180,31 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
       }
 
       if (data && typeof data.success === 'boolean') {
+        const defaultMsg = data.success
+          ? `Thank you, ${name}! Your message has been sent.`
+          : 'Email delivery could not be completed.';
         return {
           success: data.success,
-          message: data.message || (data.success ? `Thank you, ${name}! Your message has been sent.` : 'Email delivery could not be completed.')
+          message: extractMessage(data, defaultMsg),
+          status: data?.data?.status || (data.success ? 'delivered' : 'failed')
         };
       }
 
       if (res.ok) {
         return {
           success: true,
-          message: data?.message || `Thank you, ${name}! Your message has been received.`
+          message: extractMessage(data, `Thank you, ${name}! Your message has been received.`),
+          status: 'received'
         };
       } else {
         return {
           success: false,
-          message: data?.detail || data?.message || `HTTP ${res.status}: Failed to submit message.`
+          message: extractMessage(data, `HTTP ${res.status}: Failed to submit message.`),
+          status: 'http_error'
         };
       }
     } catch (err: any) {
-      lastDetailedError = err?.message || 'Network connection failed.';
+      lastDetailedError = typeof err?.message === 'string' ? err.message : 'Network connection failed.';
       // Continue to next endpoint fallback
     }
   }
@@ -186,7 +217,8 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
 
   return {
     success: false,
-    message: `Unable to connect to the portfolio contact service${configGuidance} Please reach out directly to Hari Nandhini at harinandhini030506@gmail.com.`
+    message: lastDetailedError || `Unable to connect to the portfolio contact service${configGuidance} Please reach out directly to Hari Nandhini at harinandhini030506@gmail.com.`,
+    status: 'network_error'
   };
 }
 

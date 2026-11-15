@@ -37,7 +37,7 @@ export const Toast: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
               <AlertCircle className="w-5 h-5 text-cyber-orange shrink-0 mt-0.5" />
             )}
             <p className="text-xs font-mono flex-1 leading-relaxed text-cyber-text">
-              {toast.message}
+              {typeof toast.message === 'string' ? toast.message : String(toast.message || '')}
             </p>
             <button
               onClick={() => onDismiss(toast.id)}

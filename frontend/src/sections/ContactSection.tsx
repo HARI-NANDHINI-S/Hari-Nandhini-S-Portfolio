@@ -9,7 +9,10 @@ import {
   Copy, 
   Check, 
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Loader2,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PERSONAL_INFO } from '../data/portfolioData';
@@ -28,6 +31,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [submissionState, setSubmissionState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [submissionFeedback, setSubmissionFeedback] = useState<string>('');
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -37,18 +42,54 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return; // Prevent duplicate submissions
-    if (!formData.name.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
-      onShowToast('error', 'Please fill in all contact fields.');
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isSubmitting) return; // Prevent duplicate concurrent submissions
+
+    const trimmedName = formData.name.trim();
+    const trimmedEmail = formData.email.trim();
+    const trimmedSubject = formData.subject.trim();
+    const trimmedMessage = formData.message.trim();
+
+    if (!trimmedName || !trimmedEmail || !trimmedSubject || !trimmedMessage) {
+      setSubmissionState('error');
+      const missingMsg = 'Please fill in all contact fields (name, email, subject, and message).';
+      setSubmissionFeedback(missingMsg);
+      onShowToast('error', missingMsg);
+      return;
+    }
+
+    if (!trimmedEmail.includes('@') || !trimmedEmail.includes('.')) {
+      setSubmissionState('error');
+      const invalidEmailMsg = 'Please provide a valid email address.';
+      setSubmissionFeedback(invalidEmailMsg);
+      onShowToast('error', invalidEmailMsg);
       return;
     }
 
     setIsSubmitting(true);
+    setSubmissionState('loading');
+    setSubmissionFeedback('Sending your message...');
+
     try {
-      const res = await submitContact(formData);
-      if (res.success) {
-        onShowToast('success', res.message);
+      const res = await submitContact({
+        name: trimmedName,
+        email: trimmedEmail,
+        subject: trimmedSubject,
+        message: trimmedMessage,
+      });
+
+      // Strictly verify boolean success flag from provider
+      if (res && res.success === true) {
+        setSubmissionState('success');
+        const successMsg = typeof res.message === 'string' && res.message.trim()
+          ? res.message
+          : 'Your message has been sent successfully!';
+        setSubmissionFeedback(successMsg);
+        onShowToast('success', successMsg);
+
         try {
           confetti({
             particleCount: 50,
@@ -57,12 +98,25 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
             colors: ['#168BFF', '#38D9FF', '#FF852E']
           });
         } catch (err) {}
+
+        // Clear form fields ONLY on verified delivery success
         setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
-        onShowToast('error', res.message);
+        // Delivery failed: preserve user input so they can easily retry
+        setSubmissionState('error');
+        const errorMsg = typeof res?.message === 'string' && res.message.trim()
+          ? res.message
+          : 'Email delivery could not be completed. Please check your details and retry.';
+        setSubmissionFeedback(errorMsg);
+        onShowToast('error', errorMsg);
       }
     } catch (err: any) {
-      onShowToast('error', err?.message || 'An unexpected error occurred while sending.');
+      setSubmissionState('error');
+      const errorMsg = typeof err?.message === 'string' && err.message.trim()
+        ? err.message
+        : 'An unexpected connection error occurred. Please try again.';
+      setSubmissionFeedback(errorMsg);
+      onShowToast('error', errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -253,6 +307,44 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
                   />
                 </div>
 
+                {/* Submission State Notification Banners */}
+                {submissionState === 'loading' && (
+                  <div className="p-3.5 rounded-xl bg-cyber-blue/10 border border-cyber-blue/30 flex items-center gap-3 text-cyber-cyan animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0 text-cyber-cyan" />
+                    <span className="text-xs font-mono font-medium">Sending your message...</span>
+                  </div>
+                )}
+
+                {submissionState === 'success' && (
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3 text-emerald-400">
+                    <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-400" />
+                    <div className="flex-1">
+                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">Message Delivered</p>
+                      <p className="text-xs font-mono text-emerald-300/90 mt-1 leading-relaxed">
+                        {submissionFeedback || 'Your message has been sent successfully! Hari will review and respond shortly.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {submissionState === 'error' && (
+                  <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400">
+                    <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-cyber-orange" />
+                    <div className="flex-1">
+                      <p className="text-xs font-mono font-bold uppercase tracking-wider text-cyber-orange">Delivery Notice</p>
+                      <p className="text-xs font-mono text-red-300/90 mt-1 leading-relaxed">
+                        {submissionFeedback}
+                      </p>
+                      <p className="text-[11px] font-mono text-cyber-muted mt-2">
+                        Your entered details are preserved above. You may edit and retry, or reach out directly at{' '}
+                        <a href={`mailto:${PERSONAL_INFO.email}`} className="text-cyber-cyan underline hover:text-cyber-blue transition-colors">
+                          {PERSONAL_INFO.email}
+                        </a>.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Single Professional Submit Button */}
                 <div className="pt-2">
                   <button
@@ -260,8 +352,17 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onShowToast }) =
                     disabled={isSubmitting}
                     className="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyber-blue via-cyber-cyan to-cyber-orange hover:opacity-95 text-white text-xs sm:text-sm font-semibold shadow-glow-cyan hover:scale-[1.01] active:scale-[0.99] disabled:hover:scale-100 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
-                    <Send className="w-4 h-4" />
-                    <span>{isSubmitting ? 'Dispatching Message...' : 'Send Message'}</span>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Sending your message...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>{submissionState === 'error' ? 'Retry Sending Message' : 'Send Message'}</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
