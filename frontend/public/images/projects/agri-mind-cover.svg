@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050B16"/>
+      <stop offset="50%" stop-color="#0A1424"/>
+      <stop offset="100%" stop-color="#07101E"/>
+    </linearGradient>
+    <linearGradient id="blueCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#168BFF"/>
+      <stop offset="100%" stop-color="#38D9FF"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF852E"/>
+      <stop offset="100%" stop-color="#FF5722"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(22, 139, 255, 0.07)" stroke-width="1"/>
+      <circle cx="40" cy="40" r="1.2" fill="rgba(56, 217, 255, 0.15)"/>
+    </pattern>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  <rect width="1200" height="750" fill="url(#grid)"/>
+
+  <!-- Border & Outer Sci-Fi Corners -->
+  <rect x="20" y="20" width="1160" height="710" rx="16" fill="none" stroke="rgba(22, 139, 255, 0.25)" stroke-width="1.5"/>
+  <path d="M 20 60 L 20 20 L 60 20" fill="none" stroke="#168BFF" stroke-width="3.5"/>
+  <path d="M 1140 20 L 1180 20 L 1180 60" fill="none" stroke="#168BFF" stroke-width="3.5"/>
+  <path d="M 20 690 L 20 730 L 60 730" fill="none" stroke="#FF852E" stroke-width="3.5"/>
+  <path d="M 1140 730 L 1180 730 L 1180 690" fill="none" stroke="#FF852E" stroke-width="3.5"/>
+
+  
+  <rect x="50" y="45" width="220" height="32" rx="8" fill="rgba(46, 204, 113, 0.15)" stroke="rgba(46, 204, 113, 0.4)" stroke-width="1.5"/>
+  <circle cx="70" cy="61" r="5" fill="#2ECC71"/>
+  <text x="85" y="66" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#2ECC71" letter-spacing="1.5">AGRIMIND // PRECISION AI</text>
+
+  <!-- Satellite Geometric Crop Fields Grid -->
+  <g transform="translate(600, 360)">
+    <!-- Isometric Field Polygons -->
+    <polygon points="0,-160 220,-40 0,80 -220,-40" fill="rgba(22, 139, 255, 0.08)" stroke="#168BFF" stroke-width="2"/>
+    <polygon points="0,-70 140,10 0,90 -140,10" fill="rgba(46, 204, 113, 0.14)" stroke="#2ECC71" stroke-width="2.5" filter="url(#subtleGlow)"/>
+    <polygon points="0,20 180,120 0,220 -180,120" fill="rgba(255, 133, 46, 0.09)" stroke="#FF852E" stroke-width="2"/>
+
+    <!-- Sensor Nodes & Field Beacons -->
+    <circle cx="0" cy="10" r="16" fill="#0A1424" stroke="#2ECC71" stroke-width="3"/>
+    <circle cx="0" cy="10" r="6" fill="#2ECC71"/>
+    
+    <!-- Data Connection Beams -->
+    <line x1="0" y1="10" x2="-180" y2="-120" stroke="rgba(56, 217, 255, 0.6)" stroke-width="2" stroke-dasharray="4 4"/>
+    <line x1="0" y1="10" x2="180" y2="-120" stroke="rgba(46, 204, 113, 0.6)" stroke-width="2" stroke-dasharray="4 4"/>
+    <line x1="0" y1="10" x2="0" y2="-180" stroke="rgba(255, 133, 46, 0.7)" stroke-width="2"/>
+
+    <!-- Floating Metric Cards -->
+    <g transform="translate(-240, -140)">
+      <rect width="130" height="50" rx="8" fill="#0A1424" stroke="#168BFF" stroke-width="1.5"/>
+      <text x="15" y="22" font-family="'JetBrains Mono', monospace" font-size="10" fill="#9BAAC0">SOIL N-P-K</text>
+      <text x="15" y="38" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#38D9FF">Optimal: 84%</text>
+    </g>
+
+    <g transform="translate(140, -140)">
+      <rect width="140" height="50" rx="8" fill="#0A1424" stroke="#2ECC71" stroke-width="1.5"/>
+      <text x="15" y="22" font-family="'JetBrains Mono', monospace" font-size="10" fill="#9BAAC0">RECOMMENDATION</text>
+      <text x="15" y="38" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#2ECC71">Rice / Paddy</text>
+    </g>
+  </g>
+
+  <!-- Bottom Metric Bar -->
+  <rect x="50" y="660" width="410" height="42" rx="10" fill="rgba(10, 20, 36, 0.9)" stroke="rgba(46, 204, 113, 0.4)" stroke-width="1"/>
+  <text x="70" y="686" font-family="'Space Grotesk', sans-serif" font-size="13" font-weight="600" fill="#F4F7FC">AI Agricultural Decision Support Platform</text>
+  <text x="400" y="686" font-family="'JetBrains Mono', monospace" font-size="12" fill="#2ECC71">Yield +28%</text>
+
+</svg>

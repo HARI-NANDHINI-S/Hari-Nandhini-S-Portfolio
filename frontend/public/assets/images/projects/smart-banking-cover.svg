@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050B16"/>
+      <stop offset="50%" stop-color="#0A1424"/>
+      <stop offset="100%" stop-color="#07101E"/>
+    </linearGradient>
+    <linearGradient id="blueCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#168BFF"/>
+      <stop offset="100%" stop-color="#38D9FF"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF852E"/>
+      <stop offset="100%" stop-color="#FF5722"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(22, 139, 255, 0.07)" stroke-width="1"/>
+      <circle cx="40" cy="40" r="1.2" fill="rgba(56, 217, 255, 0.15)"/>
+    </pattern>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="subtleGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1200" height="750" fill="url(#bgGrad)"/>
+  <rect width="1200" height="750" fill="url(#grid)"/>
+
+  <!-- Border & Outer Sci-Fi Corners -->
+  <rect x="20" y="20" width="1160" height="710" rx="16" fill="none" stroke="rgba(22, 139, 255, 0.25)" stroke-width="1.5"/>
+  <path d="M 20 60 L 20 20 L 60 20" fill="none" stroke="#168BFF" stroke-width="3.5"/>
+  <path d="M 1140 20 L 1180 20 L 1180 60" fill="none" stroke="#168BFF" stroke-width="3.5"/>
+  <path d="M 20 690 L 20 730 L 60 730" fill="none" stroke="#FF852E" stroke-width="3.5"/>
+  <path d="M 1140 730 L 1180 730 L 1180 690" fill="none" stroke="#FF852E" stroke-width="3.5"/>
+
+  
+  <rect x="50" y="45" width="220" height="32" rx="8" fill="rgba(22, 139, 255, 0.15)" stroke="rgba(22, 139, 255, 0.4)" stroke-width="1.5"/>
+  <circle cx="70" cy="61" r="5" fill="#38D9FF"/>
+  <text x="85" y="66" font-family="'JetBrains Mono', monospace" font-size="13" font-weight="700" fill="#38D9FF" letter-spacing="1.5">SMART BANKING // LEDGER</text>
+
+  <!-- Central Vault & Block Flow -->
+  <g transform="translate(600, 360)">
+    <!-- Encrypted Vault Safe Geometry -->
+    <circle cx="0" cy="0" r="140" fill="#0A1424" stroke="#168BFF" stroke-width="3" filter="url(#glow)"/>
+    <circle cx="0" cy="0" r="110" fill="none" stroke="rgba(56, 217, 255, 0.3)" stroke-width="2" stroke-dasharray="10 5"/>
+    <circle cx="0" cy="0" r="70" fill="#0D1A30" stroke="#FF852E" stroke-width="2"/>
+
+    <!-- Keyhole & Shield Icon -->
+    <path d="M -16 -20 L 16 -20 L 22 10 L 0 35 L -22 10 Z" fill="none" stroke="#38D9FF" stroke-width="3"/>
+    <circle cx="0" cy="-2" r="5" fill="#FF852E"/>
+
+    <!-- Transaction Stream Curves (Left to Right) -->
+    <path d="M -420 -80 C -250 -80, -200 0, -140 0" fill="none" stroke="#38D9FF" stroke-width="3" stroke-dasharray="6 4" filter="url(#subtleGlow)"/>
+    <path d="M 140 0 C 200 0, 250 80, 420 80" fill="none" stroke="#2ECC71" stroke-width="3" stroke-dasharray="6 4" filter="url(#subtleGlow)"/>
+
+    <!-- Left Transaction Block -->
+    <g transform="translate(-460, -120)">
+      <rect width="180" height="75" rx="10" fill="#0A1424" stroke="#168BFF" stroke-width="1.5"/>
+      <text x="15" y="28" font-family="'JetBrains Mono', monospace" font-size="10" fill="#9BAAC0">TRANSFER REQUEST</text>
+      <text x="15" y="52" font-family="'Space Grotesk', sans-serif" font-size="16" font-weight="700" fill="#FFFFFF">$4,850.00</text>
+    </g>
+
+    <!-- Right Validated Block -->
+    <g transform="translate(280, 50)">
+      <rect width="180" height="75" rx="10" fill="#0A1424" stroke="#2ECC71" stroke-width="1.5"/>
+      <text x="15" y="28" font-family="'JetBrains Mono', monospace" font-size="10" fill="#2ECC71">LEDGER COMMITTED</text>
+      <text x="15" y="52" font-family="'Space Grotesk', sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">HASH: 7a8f...21c</text>
+    </g>
+  </g>
+
+  <!-- Bottom Metric Bar -->
+  <rect x="50" y="660" width="410" height="42" rx="10" fill="rgba(10, 20, 36, 0.9)" stroke="rgba(22, 139, 255, 0.3)" stroke-width="1"/>
+  <text x="70" y="686" font-family="'Space Grotesk', sans-serif" font-size="13" font-weight="600" fill="#F4F7FC">ACID Compliant Transaction Ledger &amp; Security</text>
+
+</svg>

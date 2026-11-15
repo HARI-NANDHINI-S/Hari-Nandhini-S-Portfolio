@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #050B16;
+    --bg-secondary: #0A1424;
+    --accent-blue: #168BFF;
+    --accent-cyan: #38D9FF;
+    --accent-orange: #FF852E;
+    --text-primary: #F4F7FC;
+    --text-muted: #9BAAC0;
+    --border-color: #1A2E4C;
+    --card-bg: rgba(10, 20, 36, 0.85);
+  }
+
+  html.light {
+    --bg-primary: #F5F8FC;
+    --bg-secondary: #EAF0F8;
+    --accent-blue: #087BEA;
+    --accent-cyan: #0097C2;
+    --accent-orange: #EF7928;
+    --text-primary: #10213A;
+    --text-muted: #52647B;
+    --border-color: #DCE5F0;
+    --card-bg: rgba(255, 255, 255, 0.95);
+  }
+
+  html.light body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+
+  /* Universal Light Theme Component Overrides */
+  html.light .text-cyber-text:not([class*="bg-clip-text"]) {
+    color: #10213A;
+  }
+
+  html.light .text-cyber-muted {
+    color: #52647B;
+  }
+
+  html.light [class*="bg-cyber-card"] {
+    background-color: #FFFFFF;
+  }
+
+  html.light [class*="bg-cyber-bg"] {
+    background-color: #EAF0F8;
+  }
+
+  html.light [class*="border-cyber-cardBorder"] {
+    border-color: #DCE5F0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Offset for fixed navbar so section titles never clip */
+  section {
+    scroll-margin-top: 90px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050B16;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #EAF0F8;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1A2E4C;
+  border-radius: 4px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #DCE5F0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #168BFF;
+}
+
+/* Glassmorphism Panels */
+.glass-panel {
+  background: rgba(10, 20, 36, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(22, 139, 255, 0.22);
+}
+
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid #DCE5F0;
+  box-shadow: 0 4px 20px -2px rgba(16, 33, 58, 0.06);
+}
+
+.glass-nav {
+  background: rgba(5, 11, 22, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(22, 139, 255, 0.2);
+}
+
+html.light .glass-nav {
+  background: rgba(245, 248, 252, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid #DCE5F0;
+  box-shadow: 0 4px 20px -4px rgba(16, 33, 58, 0.08);
+}
+
+/* Glow Utilities */
+.glow-text-blue {
+  text-shadow: 0 0 16px rgba(22, 139, 255, 0.6);
+}
+
+html.light .glow-text-blue {
+  text-shadow: 0 0 10px rgba(8, 123, 234, 0.25);
+}
+
+.glow-text-orange {
+  text-shadow: 0 0 16px rgba(255, 133, 46, 0.6);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 16px rgba(56, 217, 255, 0.6);
+}
+
+.glow-border {
+  border-color: rgba(22, 139, 255, 0.4);
+  box-shadow: 0 0 15px rgba(22, 139, 255, 0.15);
+}
+
+/* Light Sweep Effect for Certificate & Project Cards */
+.light-sweep-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.light-sweep-container::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.8s ease;
+  pointer-events: none;
+}
+
+.light-sweep-container:hover::after {
+  transform: translateX(100%);
+}
+
+/* Cyber Grid Background */
+.cyber-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(22, 139, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 139, 255, 0.06) 1px, transparent 1px);
+}
+
+html.light .cyber-grid {
+  background-image: 
+    linear-gradient(to right, rgba(8, 123, 234, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(8, 123, 234, 0.06) 1px, transparent 1px);
+}
+
+/* Accessibility: respect user prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
