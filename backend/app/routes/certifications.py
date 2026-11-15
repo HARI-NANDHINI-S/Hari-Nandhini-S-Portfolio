@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 import json
-from backend.app.database import get_db
-from backend.app.models.models import Certification
-from backend.app.schemas.schemas import CertificationResponse
+from app.database import get_db
+from app.models.models import Certification
+from app.schemas.schemas import CertificationResponse
 
 router = APIRouter(prefix="/api/certifications", tags=["Certifications"])
 

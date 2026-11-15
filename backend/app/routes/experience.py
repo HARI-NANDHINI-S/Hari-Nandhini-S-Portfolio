@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 import json
-from backend.app.database import get_db
-from backend.app.models.models import Experience
-from backend.app.schemas.schemas import ExperienceResponse
+from app.database import get_db
+from app.models.models import Experience
+from app.schemas.schemas import ExperienceResponse
 
 router = APIRouter(prefix="/api/experience", tags=["Experience"])
 

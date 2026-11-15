@@ -10,9 +10,9 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
-from backend.app.database import get_db
-from backend.app.models.models import ContactMessage
-from backend.app.schemas.schemas import ContactCreate
+from app.database import get_db
+from app.models.models import ContactMessage
+from app.schemas.schemas import ContactCreate
 
 # Load environment variables
 load_dotenv()

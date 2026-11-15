@@ -8,10 +8,10 @@ load_dotenv()
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from backend.app.database import engine, Base, SessionLocal
-from backend.app.models.models import Project
-from backend.app.routes import contact, projects, certifications, achievements, experience
-from backend.app.seed import seed_database
+from app.database import engine, Base, SessionLocal
+from app.models.models import Project
+from app.routes import contact, projects, certifications, achievements, experience
+from app.seed import seed_database
 
 # Create tables
 Base.metadata.create_all(bind=engine)

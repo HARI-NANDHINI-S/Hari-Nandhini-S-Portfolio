@@ -1,6 +1,6 @@
 import json
-from backend.app.database import SessionLocal, engine, Base
-from backend.app.models.models import Project, Certification, Achievement, Experience
+from app.database import SessionLocal, engine, Base
+from app.models.models import Project, Certification, Achievement, Experience
 
 def seed_database():
     Base.metadata.create_all(bind=engine)

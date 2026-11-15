@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-from backend.app.database import get_db
-from backend.app.models.models import Achievement
-from backend.app.schemas.schemas import AchievementResponse
+from app.database import get_db
+from app.models.models import Achievement
+from app.schemas.schemas import AchievementResponse
 
 router = APIRouter(prefix="/api/achievements", tags=["Achievements"])
 
