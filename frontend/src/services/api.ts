@@ -112,7 +112,12 @@ export async function submitContact(form: ContactSubmission): Promise<{ success:
     endpointsToTry.push(`${apiBase.replace(/\/api$/, '')}/contact`);
   }
 
-  // 3. In development ONLY, allow local dev fallbacks (strictly avoided in production)
+  // 3. Direct production Render backend fail-safe (in case Vercel rewrite or proxy encounters delay)
+  if (!import.meta.env.DEV && apiBase === '/api') {
+    endpointsToTry.push('https://hari-portfolio-backend-api.onrender.com/api/contact');
+  }
+
+  // 4. In development ONLY, allow local dev fallbacks (strictly avoided in production)
   if (import.meta.env.DEV) {
     endpointsToTry.push('http://127.0.0.1:8000/api/contact');
     endpointsToTry.push('http://localhost:8000/api/contact');

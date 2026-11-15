@@ -83,11 +83,12 @@ def root():
 @app.get("/health")
 @app.get("/api/health")
 def health_check():
-    smtp_user = os.getenv("SMTP_USERNAME", "").strip()
-    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_from = os.getenv("RESEND_FROM_EMAIL", "").strip()
     return {
         "status": "healthy",
         "service": "portfolio-backend",
-        "smtp_configured": bool(smtp_user and smtp_pass),
+        "email_provider": "resend",
+        "email_configured": bool(resend_key and resend_from),
         "target_email": os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com")
     }

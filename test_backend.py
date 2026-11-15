@@ -1,7 +1,15 @@
-from backend.app.database import SessionLocal
-from backend.app.models.models import Project, Certification, Achievement, Experience, ContactMessage
-from backend.app.routes import contact, projects, certifications, achievements, experience
-from backend.app.schemas.schemas import ContactCreate
+import os
+import sys
+from unittest.mock import patch, MagicMock
+
+# Ensure backend folder is on sys.path
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend"))
+
+from app.database import SessionLocal
+from app.models.models import Project, Certification, Achievement, Experience, ContactMessage
+from app.routes import contact, projects, certifications, achievements, experience
+from app.schemas.schemas import ContactCreate
+from app.main import health_check
 
 def run_tests():
     db = SessionLocal()
@@ -34,21 +42,58 @@ def run_tests():
     print(f" Experience: Retrieved {len(all_exp)} items.")
     assert len(all_exp) >= 3
 
-    # 6. Contact message submission
-    test_submission = ContactCreate(
+    # 6. Health & Contact Status Check
+    health = health_check()
+    print(" Health check status:", health)
+    assert health["status"] == "healthy"
+    assert health["email_provider"] == "resend"
+
+    c_status = contact.get_contact_status()
+    print(" Contact endpoint diagnostic status:", c_status)
+    assert c_status["status"] == "online"
+    assert c_status["email_provider"] == "resend"
+
+    # 7. Contact message submission - Unconfigured Provider Test
+    test_submission_unconfigured = ContactCreate(
         name="CIT Tech Lead",
         email="techlead@cit.edu.in",
         subject="Internship & Project Discussion",
         message="Hello Hari Nandhini, we reviewed your Land-IQ and VoxNira projects. We would love to discuss an internship role!"
     )
-    res = contact.submit_contact(test_submission, db=db)
-    print(" Contact Submission Result:", res["message"])
-    assert "data" in res and "id" in res["data"]
+    res_unconfigured = contact.submit_contact(test_submission_unconfigured, db=db)
+    print(" Contact Submission (Unconfigured Provider):", res_unconfigured["message"])
+    assert res_unconfigured["success"] is False
+    assert res_unconfigured["data"]["status"] == "delivery_failed_provider"
 
-    # 7. Check DB persistence
-    stored = db.query(ContactMessage).filter(ContactMessage.email == "techlead@cit.edu.in").first()
-    assert stored is not None
-    print(f" Database Persistence Confirmed: Message ID {stored.id} saved in SQLite with status '{stored.status}'!")
+    # Check DB persistence for unconfigured test
+    stored_unconfigured = db.query(ContactMessage).filter(ContactMessage.id == res_unconfigured["data"]["id"]).first()
+    assert stored_unconfigured is not None
+    assert stored_unconfigured.status == "delivery_failed_provider"
+    print(f" Database Persistence Confirmed: Message ID {stored_unconfigured.id} saved in SQLite with status '{stored_unconfigured.status}'!")
+
+    # 8. Contact message submission - Successful Provider Acceptance Test
+    mock_response = MagicMock()
+    mock_response.__enter__.return_value = mock_response
+    mock_response.getcode.return_value = 200
+    mock_response.read.return_value = b'{"id": "resend_test_msg_987654321"}'
+
+    with patch.dict(os.environ, {"RESEND_API_KEY": "re_mock_test_key_12345", "RESEND_FROM_EMAIL": "onboarding@resend.dev"}):
+        with patch("urllib.request.urlopen", return_value=mock_response):
+            test_submission_success = ContactCreate(
+                name="Google Recruiter",
+                email="recruiter@google.com",
+                subject="Senior Software Engineer Role",
+                message="We are impressed with your portfolio and would like to invite you for an interview."
+            )
+            res_success = contact.submit_contact(test_submission_success, db=db)
+            print(" Contact Submission (Provider Success):", res_success["message"])
+            assert res_success["success"] is True
+            assert res_success["data"]["status"] == "delivered"
+
+            stored_success = db.query(ContactMessage).filter(ContactMessage.id == res_success["data"]["id"]).first()
+            assert stored_success is not None
+            assert stored_success.status == "delivered"
+            print(f" Provider Acceptance Confirmed: Message ID {stored_success.id} saved in SQLite with status '{stored_success.status}'!")
 
     db.close()
     print("\n ALL BACKEND SYSTEM AND DATABASE TESTS PASSED WITH 100% SUCCESS!")

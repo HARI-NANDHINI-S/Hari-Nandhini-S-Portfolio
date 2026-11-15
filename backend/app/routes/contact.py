@@ -1,11 +1,10 @@
 import os
 import html
-import smtplib
-import socket
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import json
+import urllib.request
+import urllib.error
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -19,32 +18,27 @@ load_dotenv()
 
 router = APIRouter(tags=["Contact"])
 
-def attempt_smtp_email(name: str, sender_email: str, subject: str, message: str, timestamp: datetime) -> tuple[bool, str]:
-    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com").strip()
-    smtp_port_str = os.getenv("SMTP_PORT", "587").strip()
-    try:
-        smtp_port = int(smtp_port_str)
-    except ValueError:
-        smtp_port = 587
-
-    smtp_user = os.getenv("SMTP_USERNAME", "").strip()
-    # Strip spaces from password in case user copied a 16-character Google App Password with spaces
-    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip().replace(" ", "")
+def send_resend_email(name: str, sender_email: str, subject: str, message: str, timestamp: datetime) -> tuple[bool, str]:
+    """
+    Dispatches contact form submission via Resend HTTPS REST API.
+    Uses HTTPS port 443 (fully allowed on Render Free tier without SMTP firewall restrictions).
+    """
+    api_key = os.getenv("RESEND_API_KEY", "").strip()
+    from_email = os.getenv("RESEND_FROM_EMAIL", "").strip() or "onboarding@resend.dev"
     target_email = os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com").strip()
 
-    if not smtp_user or not smtp_pass:
-        msg = "SMTP credentials (SMTP_USERNAME or SMTP_PASSWORD) are not configured in environment variables or .env file."
-        print(f"[SMTP Notice] {msg}")
+    if not api_key:
+        msg = "RESEND_API_KEY is not configured in backend environment variables."
+        print(f"[Resend Notice] {msg}")
         return False, msg
 
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"[Portfolio Contact] {subject} - from {name}"
-        msg["From"] = f"{name} via Portfolio <{smtp_user}>"
-        msg["To"] = target_email
-        msg["Reply-To"] = sender_email
+    # Format from address cleanly (e.g. "Portfolio Contact <onboarding@resend.dev>")
+    if "<" not in from_email:
+        formatted_from = f"Portfolio Contact <{from_email}>"
+    else:
+        formatted_from = from_email
 
-        body_text = f"""
+    body_text = f"""
 New Contact Form Submission from Hari Nandhini's Digital Portfolio:
 ----------------------------------------------------------------------
 Sender Name  : {name}
@@ -59,8 +53,7 @@ This email was generated from your portfolio contact form.
 Click Reply to respond directly to {sender_email}.
 """
 
-        body_html = f"""
-<!DOCTYPE html>
+    body_html = f"""<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -96,61 +89,71 @@ Click Reply to respond directly to {sender_email}.
       <div class="message-box">{html.escape(message)}</div>
     </div>
     <div class="footer">
-      You received this message because someone contacted you through your digital portfolio. Click "Reply" to respond directly to {html.escape(sender_email)}.
+      You received this message because someone contacted you through your digital portfolio. Click &quot;Reply&quot; to respond directly to {html.escape(sender_email)}.
     </div>
   </div>
 </body>
-</html>
-"""
-        msg.attach(MIMEText(body_text, "plain"))
-        msg.attach(MIMEText(body_html, "html"))
+</html>"""
 
-        if smtp_port == 465:
-            server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=12)
-        else:
-            server = smtplib.SMTP(smtp_host, smtp_port, timeout=12)
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
+    payload = {
+        "from": formatted_from,
+        "to": [target_email],
+        "reply_to": sender_email,
+        "subject": f"[Portfolio Contact] {subject} - from {name}",
+        "html": body_html,
+        "text": body_text
+    }
 
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
-        server.quit()
-        print(f"[SMTP Success] Email dispatched successfully to {target_email} from {sender_email}")
-        return True, f"Email delivered successfully to {target_email}."
-    except smtplib.SMTPAuthenticationError as e:
-        err = f"SMTP Authentication failed for user '{smtp_user}'. Please verify your Gmail App Password."
-        print(f"[SMTP Error] {err} ({e})")
-        return False, err
-    except (smtplib.SMTPConnectError, socket.timeout, ConnectionRefusedError, OSError) as e:
-        err = f"Could not establish connection to SMTP host {smtp_host}:{smtp_port}."
-        print(f"[SMTP Error] {err} ({e})")
-        return False, err
-    except smtplib.SMTPRecipientsRefused as e:
-        err = f"Recipient email '{target_email}' was rejected by the SMTP server."
-        print(f"[SMTP Error] {err} ({e})")
-        return False, err
-    except smtplib.SMTPException as e:
-        err = f"SMTP protocol error: {str(e)}"
-        print(f"[SMTP Error] {err}")
-        return False, err
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "HariNandhini-Portfolio/1.0"
+        },
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=12) as response:
+            status_code = response.getcode()
+            resp_body = response.read().decode("utf-8")
+            data = json.loads(resp_body) if resp_body else {}
+            if status_code in (200, 201) and "id" in data:
+                print(f"[Resend Success] Email accepted by Resend (ID: {data['id']}) for {target_email} from {sender_email}")
+                return True, f"Email delivered successfully to {target_email}."
+            else:
+                return False, f"Resend API returned status {status_code}."
+    except urllib.error.HTTPError as e:
+        err_msg = ""
+        try:
+            err_data = json.loads(e.read().decode("utf-8"))
+            err_msg = err_data.get("message", str(e))
+        except Exception:
+            err_msg = str(e)
+        print(f"[Resend Error] HTTP {e.code}: {err_msg}")
+        return False, f"Resend API error ({e.code}): {err_msg}"
+    except urllib.error.URLError as e:
+        print(f"[Resend Error] Network error: {e.reason}")
+        return False, f"Could not connect to Resend API ({e.reason})."
     except Exception as e:
-        err = f"Unexpected delivery failure: {str(e)}"
-        print(f"[SMTP Error] {err}")
-        return False, err
+        print(f"[Resend Error] Unexpected failure: {str(e)}")
+        return False, f"Unexpected delivery failure: {str(e)}"
 
 @router.get("", response_model=dict, status_code=status.HTTP_200_OK)
 @router.get("/", response_model=dict, status_code=status.HTTP_200_OK)
 def get_contact_status():
-    smtp_user = os.getenv("SMTP_USERNAME", "").strip()
-    smtp_pass = os.getenv("SMTP_PASSWORD", "").strip()
+    resend_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_from = os.getenv("RESEND_FROM_EMAIL", "").strip()
     target_email = os.getenv("CONTACT_EMAIL", "harinandhini030506@gmail.com").strip()
     return {
         "status": "online",
         "service": "portfolio-contact-api",
         "endpoint": "POST /api/contact",
-        "target_email": target_email,
-        "smtp_configured": bool(smtp_user and smtp_pass)
+        "email_provider": "resend",
+        "email_configured": bool(resend_key and resend_from),
+        "target_email": target_email
     }
 
 @router.post("", response_model=dict, status_code=status.HTTP_200_OK)
@@ -199,8 +202,8 @@ def submit_contact(payload: ContactCreate, db: Session = Depends(get_db)):
 
     now = datetime.utcnow()
 
-    # Attempt SMTP email transmission directly to configured target_email
-    email_dispatched, dispatch_detail = attempt_smtp_email(
+    # Attempt email transmission via Resend HTTPS API
+    email_dispatched, dispatch_detail = send_resend_email(
         name=sanitized_name,
         sender_email=email,
         subject=sanitized_subject,
@@ -208,7 +211,7 @@ def submit_contact(payload: ContactCreate, db: Session = Depends(get_db)):
         timestamp=now
     )
 
-    status_tag = "delivered" if email_dispatched else "delivery_failed_smtp"
+    status_tag = "delivered" if email_dispatched else "delivery_failed_provider"
 
     # Save to SQLite database for audit and backup
     new_msg = ContactMessage(
